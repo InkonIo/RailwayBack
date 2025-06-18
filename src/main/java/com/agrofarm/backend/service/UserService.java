@@ -4,26 +4,29 @@ import java.util.Optional;
 
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import com.agrofarm.backend.entity.User;
 import com.agrofarm.backend.repository.UserRepository;
 
-    @Service
-    public class UserService {
+@Service
+public class UserService {
 
-        private final UserRepository userRepository;
-        private final BCryptPasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
+    private final UserRepository userRepository;
+    private final BCryptPasswordEncoder passwordEncoder;
 
-        public UserService(UserRepository userRepository) {
-            this.userRepository = userRepository;
-        }
+    public UserService(UserRepository userRepository) {
+        this.userRepository = userRepository;
+        this.passwordEncoder = new BCryptPasswordEncoder(); // Лучше внедрять через @Bean
+    }
 
-        public User registerUser(String username, String email, String rawPassword) {
+    @Transactional
+    public User registerUser(String username, String email, String rawPassword) {
         if (userRepository.existsByUsername(username)) {
-            throw new RuntimeException("Username already exists");
+            throw new IllegalArgumentException("Username already exists");
         }
         if (userRepository.existsByEmail(email)) {
-            throw new RuntimeException("Email already exists");
+            throw new IllegalArgumentException("Email already exists");
         }
 
         String encodedPassword = passwordEncoder.encode(rawPassword);
@@ -31,7 +34,7 @@ import com.agrofarm.backend.repository.UserRepository;
                 .username(username)
                 .email(email)
                 .password(encodedPassword)
-                .role("USER")
+                .role("USER") // Можно вынести в enum
                 .build();
 
         return userRepository.save(user);
@@ -47,10 +50,10 @@ import com.agrofarm.backend.repository.UserRepository;
 
     public User loginUser(String username, String rawPassword) {
         User user = userRepository.findByUsername(username)
-            .orElseThrow(() -> new RuntimeException("User not found"));
+            .orElseThrow(() -> new IllegalArgumentException("User not found"));
 
-        if (!passwordEncoder.matches(rawPassword, user.getPassword())) {
-            throw new RuntimeException("Invalid password");
+        if (!checkPassword(rawPassword, user.getPassword())) {
+            throw new IllegalArgumentException("Invalid password");
         }
 
         return user;

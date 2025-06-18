@@ -1,15 +1,18 @@
 package com.agrofarm.backend.controller;
 
-import com.agrofarm.backend.dto.AuthRequest;
-import com.agrofarm.backend.dto.RegisterRequest;
-import com.agrofarm.backend.entity.User;
-import com.agrofarm.backend.service.UserService;
-
 import java.util.Map;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+
+import com.agrofarm.backend.dto.AuthRequest;
+import com.agrofarm.backend.dto.RegisterRequest;
+import com.agrofarm.backend.entity.User;
+import com.agrofarm.backend.service.UserService;
 
 @RestController
 @RequestMapping("/api/auth")
@@ -21,11 +24,11 @@ public class UserController {
         this.userService = userService;
     }
 
-    @PostMapping("/register")
-    public ResponseEntity<?> register(@RequestBody RegisterRequest request) {
+        @PostMapping("/register")
+    public ResponseEntity<Map<String, String>> register(@RequestBody RegisterRequest request) {
         try {
             User user = userService.registerUser(request.getUsername(), request.getEmail(), request.getPassword());
-            return ResponseEntity.ok("Registered user: " + user.getUsername());
+            return ResponseEntity.ok(Map.of("message", "Registered user: " + user.getUsername()));
         } catch (RuntimeException e) {
             return ResponseEntity
                     .badRequest()
